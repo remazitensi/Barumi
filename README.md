@@ -1,5 +1,6 @@
 # Barumi
-시각 장애인을 위한 대중교통 도움 지팡이 및 버스 정보 앱 개발
+
+### 시각 장애인을 위한 대중교통 도움 지팡이 및 버스 정보 앱 개발
 
 ![image](https://github.com/user-attachments/assets/063c3acf-bbf8-40dd-8215-67ce2cdc7882)
 
@@ -15,12 +16,11 @@
 4) 버스 정보 데이터를 통해 경유하는 버스 정보 알림
 5) 목적지 정류장 도착 전 알림
 
+### 서비스 흐름도
 
 ![image](https://github.com/user-attachments/assets/b63fd3c8-c6e0-46c5-8ccb-bc5c060dbb72)
 
 
-
-![image](https://github.com/user-attachments/assets/bbda8116-3281-4eb5-ac7c-43d673960b70)
-
+### 기능 흐름도
 
 ![image](https://github.com/user-attachments/assets/9d14d7ad-946d-4670-a068-90c65b3d96b3)
