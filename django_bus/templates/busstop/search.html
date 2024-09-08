@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block content %}
+
+    <div class="container place-search-result-container">
+        <div class="top-background"
+
+             style="
+                     background-image: url({% static 'img/지도.png' %})">
+            <form method="get">
+                <div class="input_box">
+                    {% if recent_key %}
+                        <input class="text_custom form-control" placeholder="'경복궁역'정류장 검색결과"
+                               onclick=" clickHandle(this,'search')"
+                               value={{ recent_key }} type="search" name="keyword"
+                               id="keyword" class="form-control">
+                    {% else %}
+                        <input class="text_custom form-control" placeholder="'경복궁역'정류장 검색결과" type="search"
+                               value="경복궁역" onclick=" clickHandle(this,'search')"
+                               name="keyword" id="keyword"
+                               class="form-control">
+                    {% endif %}
+
+                    <button style="    height: 43px;overflow: hidden;
+    color: transparent;" id="btn_select" type="button" onclick=" clickHandle(this,'submit')"
+                    >
+                        <img src="{% static 'img/검색.svg' %}" alt="검색 버튼">검색버튼
+                    <audio src="#" class="speech" hidden></audio></button>
+                </div>
+            </form>
+        </div>
+
+
+        <div class="search_result_buttons_container">
+            <button class="help-text shadow" onclick=" clickHandle(this,'')">
+                선택한 정류장의 버스도착정보를 확인하세요.
+            <audio src="#" class="speech" hidden></audio></button>
+            <div class="rst_wrap" style="overflow-y: auto;height: 236px;">
+                <div class="rst mCustomScrollbar" id="searchResult">
+                    {% for data in data_list %}
+                        <button class="search_result shadow"
+                                onclick=" clickHandle(this, `/busstop/feed/?stationId={{ data.0 }}&busstop={{ data.1 }}`) "
+                                class="busstop-item alert alert-info" role="alert">
+                            <div class="left">
+                                <img src="{% static 'img/버스정류장아이콘@2x.png' %}" alt="버스정류장 태그">
+                            </div>
+                            <div class="center">
+                                <div class="top">        {{ data.1 }}</div>
+                            </div>
+
+                        <audio src="#" class="speech" hidden></audio></button>
+
+
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div id="map_div" class="map_wrap" style="float:left"></div>
+    </div>
+    </div>
+    <button class="roundMenuBtn" id="menuBtn" onclick="clickHandle(this,'menu')"
+            style="      background-image: url({% static 'img/메뉴.svg' %}); ">
+
+
+    <audio src="#" class="speech" hidden></audio></button>
+
+
+    <style>
+        button {
+            background-color: transparent !important;
+            border: none;
+        }
+    </style>
+
+    <script>
+        function clickHandle(obj, place) {
+            var $this = $(obj);
+            if ($this.hasClass('clicked')) {
+                if (place == "") {
+
+                } else if (place == "submit") {
+                    $('form').submit()
+                } else if (place == "menu") {
+                    goto('/')
+                } else if (place == "search") {
+
+                } else {
+                    goto(place)
+                }
+
+                //here is your code for double click
+                //  return;a
+            } else {
+                $this.addClass('clicked');
+
+                if (place == "menu") {
+                    var utterThis = new SpeechSynthesisUtterance("홈으로");
+                    utterThis.lang= 'ko-KR';
+                    var synth = window.speechSynthesis;
+                    synth.speak(utterThis);
+                } else if (place == "search") {
+                    var utterThis = new SpeechSynthesisUtterance("검색창");
+                    var synth = window.speechSynthesis;
+                     utterThis.lang= 'ko-KR';
+                    synth.speak(utterThis);
+                } else {
+                    speech(obj)
+                }
+
+                //your code for single click
+                setTimeout(function () {
+                    $this.removeClass('clicked');
+                }, 500);
+            }//end of else
+        }
+    </script>
+{% endblock %}

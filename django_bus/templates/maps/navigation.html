@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+    <meta http-equiv="refresh" content="30">
+{% endblock %}{% block content %}
+    <script type="text/javascript">
+        var map;
+        var marker_s, marker_e, marker_p1, marker_p2;
+        var totalMarkerArr = [];
+        var drawInfoArr = [];
+        var resultdrawArr = [];
+
+
+        function initTmap() {
+            // 1. 지도 띄우기
+            map = new Tmapv2.Map("map_div", {
+                center: new Tmapv2.LatLng(37.570028, 126.989072),
+                width: "100%",
+                height: "500px",
+                zoom: 15,
+                zoomControl: true,
+                scrollwheel: true,
+                compassMode: true,
+                sightVisible: true,
+                trackingMode: true,
+                httpsMode: true
+            });
+
+            const asyncPosition = (position) => {
+                //1.5 geolocation으로  접속 위치 마커 표시하기
+                var currentLatitudeY = Math.abs(position.coords.latitude);// position: new Tmapv2.LatLng(lat, lon),
+                var currentLongitudeX = Math.abs(position.coords.longitude);
+             //   alert("currentLatitudeY, currentLatitudeX" + currentLatitudeY + " heart " + currentLongitudeX)
+                // 2. 시작, 도착 심볼찍기
+                // 시작
+                marker_s = new Tmapv2.Marker({
+                    position: new Tmapv2.LatLng(currentLatitudeY, currentLongitudeX),
+                    icon: "https://tmapapis.sktelecom.com/upload/tmap/marker/pin_r_m_s.png",
+                    iconSize: new Tmapv2.Size(24, 38),
+                    map: map
+                });
+
+
+                map.setCenter(new Tmapv2.LatLng(currentLatitudeY, currentLongitudeX));
+                map.setZoom(35);
+                // 도착
+                marker_e = new Tmapv2.Marker({
+                    // position: new Tmapv2.LatLng(37.723181, 127.035791),
+                    position: new Tmapv2.LatLng(document.getElementById("destination_lat").value, document.getElementById("destination_lon").value),
+                    icon: "https://tmapapis.sktelecom.com/upload/tmap/marker/pin_r_m_e.png",
+                    iconSize: new Tmapv2.Size(24, 38),
+                    map: map
+                });
+                // 3. 경로탐색 API 사용요청
+//setCompassMode
+
+
+                if(currentLatitudeY==document.getElementById("destination_lat").value
+                && currentLongitudeX ==document.getElementById("destination_lon").value )
+                {
+                    if(confirm("목적지에 도달했습니다. 도착 예정 버스 화면으로 이동하시겠습니까?")){
+                        //호원고등학교입구(마을)[버스정류장]
+                        location.href='/busstop/search/?keyword='+document.getElementById("destination_name").value.replace("학교입구(마을)[버스정류장]","")
+                    }
+                }
+
+                let destName = document.getElementById("destination_name").value
+                const navi_data = {
+                    "appKey": "TjRtNezMbM6nrEcIBw1vGdEk5QyPn91oQMGiJ4a0",
+                    "startX": currentLongitudeX,
+                    "startY": currentLatitudeY,
+
+                    "endX": document.getElementById("destination_lon").value,
+                    "endY": document.getElementById("destination_lat").value,
+                    "reqCoordType": "WGS84GEO",
+                    "resCoordType": "EPSG3857",
+                    "startName": "현위치",
+                    //    "endName": "도착지"
+                    "endName": destName
+                }
+
+                const asyncResposnse = (response) => {
+                    var resultData = response["features"];
+                    console.log(resultData)
+
+                    //결과 출력
+                    var tDistance = navi_data['endName'] + "까지   "
+                        + ((resultData[0].properties.totalDistance) / 1000)
+                            .toFixed(1) + "km,";
+                    var tTime = " "
+                        + ((resultData[0].properties.totalTime * 1.11) / 60)
+                            .toFixed(0) + "분 남았습니다."; //1.11 은 시각장애인을 위한 배율
+                    var first_things_to_do = ""
+                    if (resultData[1].geometry.type == "LineString") {
+                        first_things_to_do += "직선 구간입니다. "
+                        first_things_to_do += resultData[1].properties.description;
+                        first_things_to_do += "직진하세요."
+                    } else if (resultData[1].geometry.type == "Point") {
+                        first_things_to_do += "커브 구간입니다. "
+                        first_things_to_do += resultData[1].properties.description;
+                        first_things_to_do += "하세요."
+
+                        if (resultData[1].properties.description.includes("횡단보도")) {
+                            first_things_to_do += "횡단보도구간입니다.  안전에 유의해주세요."
+                        }
+                    }
+                    var first_road_name = resultData[1].properties.name;
+                    const result = tDistance + tTime
+
+                    // 4. html output
+                    const all_btns = {
+                        "first_things_to_do_btn": document.querySelector("#first_things_to_do"),
+                        "result_btn": document.querySelector("#result"),
+                    }
+                    //5. 텍스트 넣기
+                    for (let btns in all_btns) {
+                        let vari_btns = btns.replace("_btn", "");
+                        vari_btns = eval(vari_btns)  // 변수화
+                        all_btns[btns].innerHTML = vari_btns+'<audio src="#" class="speech" hidden></audio>';
+                        all_btns[btns].addEventListener("click", function (e) {
+                            speech(vari_btns);
+                        });
+                    }
+
+                    //6. 텍스트 소리 넣기
+
+
+                    //기존 그려진 라인 & 마커가 있다면 초기화
+                    if (resultdrawArr.length > 0) {
+                        for (var i in resultdrawArr) {
+                            resultdrawArr[i]
+                                .setMap(null);
+                        }
+                        resultdrawArr = [];
+                    }
+
+                    drawInfoArr = [];
+
+                    for (var i in resultData) { //for문 [S]
+                        var geometry = resultData[i].geometry;
+                        var properties = resultData[i].properties;
+                        var polyline_;
+
+
+                        if (geometry.type == "LineString") {
+                            for (var j in geometry.coordinates) {
+                                // 경로들의 결과값(구간)들을 포인트 객체로 변환
+                                var latlng = new Tmapv2.Point(
+                                    geometry.coordinates[j][0],
+                                    geometry.coordinates[j][1]);
+                                // 포인트 객체를 받아 좌표값으로 변환
+                                var convertPoint = new Tmapv2.Projection.convertEPSG3857ToWGS84GEO(
+                                    latlng);
+                                // 포인트객체의 정보로 좌표값 변환 객체로 저장
+                                var convertChange = new Tmapv2.LatLng(
+                                    convertPoint._lat,
+                                    convertPoint._lng);
+                                // 배열에 담기
+                                drawInfoArr.push(convertChange);
+                            }
+                        } else {
+                            var markerImg = "";
+                            var pType = "";
+                            var size;
+
+                            if (properties.pointType == "S") { //출발지 마커
+                                markerImg = "/static/img/장소%402x.png";
+                                pType = "S";
+                                size = new Tmapv2.Size(24, 38);
+                            } else if (properties.pointType == "E") { //도착지 마커
+                                markerImg = "/static/img/장소%402x.png";
+                                pType = "E";
+                                size = new Tmapv2.Size(24, 38);
+                            } else { //각 포인트 마커
+                                markerImg = "/static/img/장소%402x.png";
+                                pType = "P";
+                                size = new Tmapv2.Size(8, 8);
+                            }
+
+                            // 경로들의 결과값들을 포인트 객체로 변환
+                            var latlon = new Tmapv2.Point(
+                                geometry.coordinates[0],
+                                geometry.coordinates[1]);
+
+                            // 포인트 객체를 받아 좌표값으로 다시 변환
+                            var convertPoint = new Tmapv2.Projection.convertEPSG3857ToWGS84GEO(
+                                latlon);
+
+                            var routeInfoObj = {
+                                markerImage: markerImg,
+                                lng: convertPoint._lng,
+                                lat: convertPoint._lat,
+                                pointType: pType
+                            };
+
+                            // Marker 추가
+                            marker_p = new Tmapv2.Marker(
+                                {
+                                    position: new Tmapv2.LatLng(
+                                        routeInfoObj.lat,
+                                        routeInfoObj.lng),
+                                    icon: routeInfoObj.markerImage,
+                                    iconSize: size,
+                                    map: map
+                                });
+                        }
+                    }//for문 [E]
+                    drawLine(drawInfoArr);
+                }
+
+                function Call(navi_data) {
+                    return $.ajax({
+                        method: "POST",
+                        url: "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result",// 보행자 경로
+                        async: false,
+                        data: navi_data,
+                        success: function (response) {
+
+                        },
+                        error: function (response) {
+                            alert('fail');
+                        }
+
+                    });
+                }
+
+                Call(navi_data).then(function (data) {
+
+
+                //    alert(data)
+                    asyncResposnse(data);
+                })
+
+
+            }
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        await asyncPosition(position);
+                    }, (e) => this.navigatorError(e),
+                    {timeout: 7000, enableHighAccuracy: true, maximumAge: 0}
+                );
+
+
+            } else {
+                alert('navigator.geolocation 업어')
+            }
+
+        }
+
+
+        $(document).ready(function () {
+            initTmap();
+        });
+
+        function addComma(num) {
+            var regexp = /\B(?=(\d{3})+(?!\d))/g;
+            return num.toString().replace(regexp, ',');
+        }
+
+        function drawLine(arrPoint) {
+            var polyline_;
+
+            polyline_ = new Tmapv2.Polyline({
+                path: arrPoint,
+                strokeColor: "#DD0000",
+                strokeWeight: 6,
+                map: map
+            });
+            resultdrawArr.push(polyline_);
+        }
+
+
+    </script>
+    </head>
+    <body>
+    <input type="hidden" id="destination_lat" name="variable" value="{{ destination_lat }}">
+    <input type="hidden" id="destination_lon" name="variable" value="{{ destination_lon }}">
+    <input type="hidden" id="destination_name" name="variable" value="{{ destination_name }}">
+    <!-- 190430 기존 지도를 모두 이미지 처리 위해 주석 처리 S -->
+    <div id="map_wrap" class="map_wrap3">
+        <div id="map_div"></div>
+    </div>
+    <div class="map_act_btn_wrap clear_box"></div>
+
+    <div class="bottom-black-container">
+        <img style="margin-top: 31px; margin-bottom: 25px" src="{% static 'img/패스 60 (2).svg' %}" alt="장식 바">
+
+        <button class=" first_things_to_do" id="first_things_to_do" onclick="clickHandle(this,'')"
+                style="background-color: dodgerblue; height: 30px"><audio src="#" class="speech" hidden></audio></button>
+        <button class="total-result" id="result" onclick="clickHandle(this,'')"><audio src="#" class="speech" hidden></audio></button>
+    </div>
+    <button class="backToPedMenu" id="backToPedMenu" onclick="clickHandle(this,'/search/')"
+            style="   color: transparent; overflow: hidden;   background-image: url({% static 'img/길안내시작.svg' %}); "
+    >
+        길찾기 메뉴로
+
+    <audio src="#" class="speech" hidden></audio></button>
+
+    <button class="roundMenuBtn" id="menuBtn" onclick="clickHandle(this,'menu')"
+            style="  color: transparent;    background-image: url({% static 'img/메뉴.svg' %}); ">
+
+홈으로
+    <audio src="#" class="speech" hidden></audio></button>
+    <style>
+        button {
+            border: none;
+        }
+    </style>
+    <script>
+        function clickHandle(obj, place) {
+            var $this = $(obj);
+            if ($this.hasClass('clicked')) {
+                if (place == "") {
+                } else if (place == "submit") {
+                    $('form').submit()
+                } else if (place == "refresh") {
+                    window.location.reload();
+                } else if (place == "menu") {
+                    goto('/')
+                } else if (place == "/search/") {
+                    goto('/search/')
+                } else {
+                    gotoNavigation(place)
+
+                }
+
+                //here is your code for double click
+                //  return;a
+            } else {
+                $this.addClass('clicked');
+
+                 if (place == "search") {
+                    var utterThis = new SpeechSynthesisUtterance("검색창");
+                utterThis.lang= 'ko-KR';
+                    var synth = window.speechSynthesis;
+                    synth.speak(utterThis);
+                } else {
+                    speech(obj)
+                }
+
+
+                //your code for single click
+                setTimeout(function () {
+                    $this.removeClass('clicked');
+                }, 500);
+            }//end of else
+        }
+    </script>
+{% endblock %}

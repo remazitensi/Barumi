@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+    <div class="container"
+         style="background-size: cover;
+                 background-position: center center;
+                 background-repeat: no-repeat;
+                 width: 100%;
+                 min-width: 100vw;
+                 display: flex;
+                 flex-direction: column;
+                 justify-content: flex-start;
+                 align-items: center;
+                 min-height: 100vh;
+                 height: 100%;
+background-color: black;
+                 {#background-image: url({% static 'img/그룹 134@2x.png' %});#}
+                 background-image: url({% static 'img/씨버스백.png' %});
+
+
+                 ">
+        <div class="logo"
+             style="
+
+            display: flex;
+             align-content: center;
+             justify-content:  center;
+             margin-top: 154px; margin-bottom: 144px">
+            <img style="      display: none;" src="{% static  'img/그룹 38.svg' %}">
+        </div>
+        <button type="button" onclick=" clickHandle(this ,'/search/')"
+                style="margin-bottom: 22px" class="main-box hover font-18-white center-center ">길찾기
+        <audio src="#" class="speech" hidden></audio></button>
+
+        <button type="button" onclick=" clickHandle(this ,'/busstop/search/')"
+                style="margin-bottom: 22px" ondbclick="location.href='/busstop/search/'"
+                class="font-18-white main-box hover center-center ">
+            버스 도착 정보
+        <audio src="#" class="speech" hidden></audio></button>
+
+    </div>
+    <script>
+
+
+        /*    window.onload = () => {
+                const all_btns = document.querySelectorAll('button');
+                for (var i = 0; i < all_btns.length; i++) {
+                    all_btns[i].addEventListener('click', function (e) {
+                        speech(e["srcElement"])
+                        console.log(e)
+                    });
+                }
+            }
+    */
+
+        function clickHandle(obj, place) {
+            var $this = $(obj);
+            if ($this.hasClass('clicked')) {
+                goto(place)
+                //here is your code for double click
+                //  return;a
+            } else {
+                $this.addClass('clicked');
+                speech(obj)
+                //your code for single click
+                setTimeout(function () {
+                    $this.removeClass('clicked');
+                }, 500);
+            }//end of else
+        }
+
+
+        /* 좌우 scroll  start
+
+        var oldScrollTop = $(window).scrollTop();
+
+        $(window).bind('scroll', function () {
+            console.log("ff")
+            if (oldScrollTop == $(window).scrollTop()) {
+                //scrolled horizontally
+                console.log("scrolled horizontally")
+            } else {
+                //scrolled vertically
+                console.log("scrolled vertically")
+                oldScrollTop = $(window).scrollTop();
+            }
+        });
+
+      좌우 scroll end */
+
+
+    </script>
+{% endblock %}
+

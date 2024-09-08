@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block content %}
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tabus</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta name="referrer" content="no-referrer">
+    <!-- 합쳐지고 최소화된 최신 CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+
+    <!-- 부가적인 테마 -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+
+    <!-- 합쳐지고 최소화된 최신 자바스크립트 -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+    <script
+            src="//code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script
+            src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appKey=l7xxb06b75b17d194ea8adcb83bfec85c97c"></script>
+    <script
+            src="/static/common.js"></script>
+    <div class="container place-search-result-container">
+        <div class="top-background"
+             style="
+                     background-image: url({% static 'img/마스크 그룹 5@2x.png' %})">
+
+            <div class="bus-stop-info">
+                <img style="width: 45px;
+height: 27px;" src="{% static 'img/버스정류장아이콘@2x.png' %}" alt="검색 버튼">
+                <button style="padding-left: 0px" onclick="clickHandle(this,'')"
+                >{{ busstop }} 버스도착정보
+                <audio src="#" class="speech" hidden></audio></button>
+            </div>
+
+        </div>
+
+
+        <div class="bus-feead-container">
+            <button class="help-text " onclick="clickHandle(this,'refresh')">
+                탭하여 업데이트 해주세요
+            <audio src="#" class="speech" hidden></audio></button>
+            <div class="rst_wrap" style="overflow-y: auto;height: 390px;">
+                <div class="rst mCustomScrollbar" id="searchResult">       {% if data_list %}
+                    {% for data in data_list %}
+                        <button class="search_result shadow"
+                                onclick="clickHandle(this,'refresh')"
+                                class="busstop-item alert alert-info" role="alert">
+                            <div class="left">
+                                <img style="width: 43px;
+height: 43px;" src="{% static 'img/버스도착정보@2x.png' %}" alt="버스정류장 태그">
+                            </div>
+                            <div class="center">
+                                {{ data.0 }}번
+                            </div>
+                            <div class="right">
+                                {{ data.1 }}분후
+                            </div>
+                        <audio src="#" class="speech" hidden></audio></button>
+
+
+                    {% endfor %}
+                {% else %}
+                    <button onclick="clickHandle(this,'')" style="    width: 300px;
+    height: 60px;">
+                        도착예정 버스가 없습니다.
+                    <audio src="#" class="speech" hidden></audio></button>
+                {% endif %}
+                </div>
+            </div>
+        </div>
+        <div id="map_div" class="map_wrap" style="float:left"></div>
+    </div>
+    </div>
+    <button class="roundMenuBtn" id="menuBtn" onclick="clickHandle(this,'menu')"
+            style="      background-image: url({% static 'img/메뉴.svg' %}); ">
+
+
+    <audio src="#" class="speech" hidden></audio></button>
+
+    <style>
+        button {
+            background-color: transparent !important;
+            border: none;
+        }
+
+        button:hover, button:focus {
+            box-shadow: 0px 3px 6px #00000029;
+            border: 2px solid #295FFF;
+        }
+    </style>
+    <script>
+        function clickHandle(obj, place) {
+            var $this = $(obj);
+            if ($this.hasClass('clicked')) {
+                if (place == "") {
+                } else if (place == "refresh") {
+                    window.location.reload();
+                } else if (place == "menu") {
+                    goto('/')
+                } else {
+                    goto(place)
+                }
+
+                //here is your code for double click
+                //  return;a
+            } else {
+                $this.addClass('clicked');
+                if (place == "menu") {
+                    var utterThis = new SpeechSynthesisUtterance("홈으로");
+                     utterThis.lang= 'ko-KR';
+                    var synth = window.speechSynthesis;
+                    synth.speak(utterThis);
+                } else {
+                    speechUpdate(obj)
+                }
+
+
+                //your code for single click
+                setTimeout(function () {
+                    $this.removeClass('clicked');
+                }, 500);
+            }//end of else
+        }
+
+        function speechUpdate(obj) {
+            //one click
+            var is = true;
+     speechText(obj,obj.innerText.replace("-", "다시").replace("번", "번 버스는 ").replace("분후", "분 후 도착예정입니다."));
+            return is;
+        }
+    </script>
+{% endblock %}

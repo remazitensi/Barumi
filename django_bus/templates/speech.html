@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta name="referrer" content="no-referrer">
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+
+<button onclick="speech(this)">
+    75번 버스가 곧 도착해
+    <audio src="#" class="speech" hidden></audio>
+<audio src="#" class="speech" hidden></audio></button>
+<script src="//code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+    const speech = function (node) {
+        let text = node.innerText;
+        text = encodeURIComponent(text);
+        console.log(text)
+        let url = "http://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&total=1&idx=0&textlen=32&q=" + text + "&tl=ko-kr"
+        console.log(url)
+        $(node.parentNode.querySelector("audio")).attr('src', url).get(0).play();
+    }
+</script>
+</body>
+</html>
